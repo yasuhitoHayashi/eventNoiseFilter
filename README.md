@@ -1,19 +1,16 @@
 # eventNoiseFiltering
-This repository is designed to filter event noise
+This repository is designed to filter event noise.
+
 
 #### Input & Output
 
 ## Features
-- Direct tracking: Processes event-based camera data streams directly, avoiding the need for frame or voxel conversion.
-- Trajectory data: Outputs the trajectory of the object’s centroid for further analysis.
-- Event point clouds: Provides point clouds of the events that form each tracked object, allowing for detailed post-processing.
-- Frequency analysis: Enables the analysis of event count fluctuations over time, useful for observing periodic patterns in the data.
+- denoise event data: Processes event-based camera data streams directly.
 
 ## Project Structure
 ```bash
 .
-├── particle_tracking.cpp       # Handles event-based particle tracking in C++
-├── peak_collection.py        # Collects peak frequency data from multiple txt files and generates violin plots
+├── noise_filter.cpp       # Handles event-based denoising in C++
 ├── plotAllData.py          # Plotting script for All data
 ├── plotEventCountFFT_Window.py      # Performs FFT analysis on event count variations using a Hamming window
 ├── plotTrajectory.py          # Plots trajectory data from tracked events
