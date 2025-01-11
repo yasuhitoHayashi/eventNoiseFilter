@@ -1,6 +1,5 @@
 # eventNoiseFiltering
-This repository is designed to filter event noise.
-
+This repository is designed to filter event noise by utilizing the presence of neighboring events.
 
 #### Input & Output
 
