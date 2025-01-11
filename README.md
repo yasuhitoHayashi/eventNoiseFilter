@@ -11,7 +11,10 @@ This repository is designed to filter event noise by utilizing the presence of n
 - Event Noise Filtering: Implements noise reduction techniques by evaluating the spatial and temporal proximity of events.
 - Parameter Tuning: Allows fine-tuning of filtering parameters such as spatial and temporal thresholds to adapt to different datasets.
 - Visualization Tools: Includes scripts for plotting raw, denoised, and aggregated event counts in customizable formats.
- 
+
+## Sample Data
+The sample data used in this repository was obtained during an experiment conducted in collaboration with Professor Nishino from Hirosaki University.
+
 ## Project Structure
 ```bash
 .
