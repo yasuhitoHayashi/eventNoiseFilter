@@ -31,7 +31,7 @@ The sample data used in this repository was obtained during an experiment conduc
 1. Download and unpack the repository.
 ```bash
 git clone https://github.com/yasuhitoHayashi/eventNoiseFiltering.git
-cd eventNoiseFiltering
+cd eventNoiseFilter
 ```
 2. Install dependencies
 
