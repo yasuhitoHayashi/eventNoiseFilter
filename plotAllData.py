@@ -1,3 +1,9 @@
+"""
+@author: HAYASHI Yasuhito (dangom_ya)
+
+CopyPolicy: 
+    Released under the terms of the LGPLv2.1 or later.
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D

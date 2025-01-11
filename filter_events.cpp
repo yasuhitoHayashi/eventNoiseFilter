@@ -5,11 +5,9 @@
 
 namespace py = pybind11;
 
-// イベントデータの構造体
 struct Event {
     float x, y, time;
 
-    // 引数を取るコンストラクタを追加
     Event(float x = 0, float y = 0, float time = 0) : x(x), y(y), time(time) {}
 };
 
@@ -49,10 +47,9 @@ std::vector<Event> filter_events(const std::vector<Event> &events, float N, floa
     return filtered_events;
 }
 
-// Pythonバインディング
 PYBIND11_MODULE(filter_events, m) {
     py::class_<Event>(m, "Event")
-        .def(py::init<float, float, float>())  // 引数を取るコンストラクタを登録
+        .def(py::init<float, float, float>())
         .def_readwrite("x", &Event::x)
         .def_readwrite("y", &Event::y)
         .def_readwrite("time", &Event::time);
