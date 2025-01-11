@@ -5,6 +5,7 @@ import os
 from tqdm import tqdm
 import glob
 import argparse
+from multiprocessing import Pool, cpu_count
 
 # コマンドライン引数を設定
 parser = argparse.ArgumentParser(description="Process a CSV file and filter events.")
@@ -16,8 +17,9 @@ file_path = args.input
 if not os.path.isfile(file_path):
     raise FileNotFoundError(f"The file '{file_path}' does not exist.")
 
-# 出力ディレクトリを設定（入力ファイルと同じディレクトリ内に作成）
-output_dir = os.path.join(os.path.dirname(file_path), "filtered_results")
+# 出力ディレクトリを設定（CSVファイル名をディレクトリ名に変換）
+file_name = os.path.splitext(os.path.basename(file_path))[0]  # CSVファイル名（拡張子なし）
+output_dir = os.path.join(os.path.dirname(file_path), file_name)
 os.makedirs(output_dir, exist_ok=True)
 
 # パラメータ設定
@@ -25,27 +27,19 @@ N = 5   # 空間近傍範囲
 tau = 2  # 時間近傍範囲
 K_threshold = 2
 
-# 総行数をカウント（ヘッダーがある・ないに応じて調整）
-with open(file_path, 'r') as f:
-    total_lines = sum(1 for _ in f)
-
 chunksize = 100000
-chunk_id = 0
-filtered_files = []
 
-print("Start processing chunks...")
-
-for chunk in tqdm(pd.read_csv(file_path, header=None, names=['x', 'y', 'polarity', 'time'],
-                              dtype={'x': 'int32', 'y': 'int32', 'polarity': 'int8', 'time': 'int64'},
-                              chunksize=chunksize, engine='python'),
-                  total=(total_lines // chunksize) + 1):
+def process_chunk(chunk_data):
+    """1つのチャンクを処理する関数"""
+    chunk_id, chunk = chunk_data
+    
     # timeをusからmsへ変換
     chunk['time'] = chunk['time'] // 1000
-    
+
     # polarity == 1のみ抽出
     chunk = chunk[chunk['polarity'] == 1]
     if len(chunk) == 0:
-        continue
+        return None, None
 
     # Eventオブジェクトリスト作成
     events = [filter_events.Event(row.x, row.y, row.time) for row in chunk.itertuples(index=False)]
@@ -61,9 +55,28 @@ for chunk in tqdm(pd.read_csv(file_path, header=None, names=['x', 'y', 'polarity
     part_file = os.path.join(output_dir, f'filtered_events_part_{chunk_id}.pkl')
     with open(part_file, 'wb') as f:
         pickle.dump(filtered_df, f)
-    filtered_files.append(part_file)
 
-    chunk_id += 1
+    return chunk_id, part_file
+
+# 総行数をカウント
+with open(file_path, 'r') as f:
+    total_lines = sum(1 for _ in f)
+
+chunk_data_generator = (
+    (i, chunk) for i, chunk in enumerate(
+        pd.read_csv(file_path, header=None, names=['x', 'y', 'polarity', 'time'],
+                    dtype={'x': 'int32', 'y': 'int32', 'polarity': 'int8', 'time': 'int64'},
+                    chunksize=chunksize, engine='python')
+    )
+)
+
+# 並列処理
+print("Start processing chunks...")
+with Pool(cpu_count()) as pool:
+    results = list(tqdm(pool.imap(process_chunk, chunk_data_generator), total=(total_lines // chunksize) + 1))
+
+# 有効な結果をフィルタリング
+filtered_files = [result[1] for result in results if result[1] is not None]
 
 print("All chunks processed. Now combining results...")
 
