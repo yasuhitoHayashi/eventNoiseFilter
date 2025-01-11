@@ -24,6 +24,19 @@ This repository is designed to filter event noise by utilizing the presence of n
 └── README.md                 # Project documentation (this file)
 ```
 
+## Installation using PIP
+1. Download and unpack the repository.
+```bash
+git clone https://github.com/yasuhitoHayashi/eventNoiseFiltering.git
+cd eventNoiseFiltering
+```
+2. Install dependencies
+
+Open a terminal and run below command:
+```bash
+pip install -r requirements.txt
+```
+
 ## Modules Overview
 ### setup.py
 Builds the C++ code using pybind11. This compiles the filter_events.cpp file into a Python module (particle_tracking).
