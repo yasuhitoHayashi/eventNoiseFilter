@@ -28,7 +28,7 @@ def plot_from_pkl(pkl_file, output_file):
     x = df['x'].values
     y = df['y'].values
 
-    fig = plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(10, 8))
     ax3d = fig.add_subplot(111, projection='3d')
 
     sc = ax3d.scatter(t/1000, x, y, cmap='viridis', s=1, alpha=1)
