@@ -4,8 +4,8 @@ This repository is designed to filter event noise by utilizing the presence of n
 #### Input & Output: The left panel shows raw event data (downsampled to 1/10), and the right panel shows denoised results.
 ![InputOutput](sampleData/inputAndOutput.png)
 
-#### Event Count: Event counts aggregated in 2 ms bins over time.
-![EventCount](sampleData/eventCount.png)
+#### Event Count: Event counts aggregated in 50 ms bins over time.
+![EventCount](sampleData/plotEventCount.png)
 
 ## Features
 - Event Noise Filtering: Implements noise reduction techniques by evaluating the spatial and temporal proximity of events.
