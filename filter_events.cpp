@@ -6,18 +6,20 @@
 namespace py = pybind11;
 
 struct Event {
-    float x, y, time;
+    int x, y;  // 整数座標
+    float time;
 
-    Event(float x = 0, float y = 0, float time = 0) : x(x), y(y), time(time) {}
+    Event(int x = 0, int y = 0, float time = 0) : x(x), y(y), time(time) {}
 };
 
-// 2次元平面上の距離計算
-inline float distance(const Event &a, const Event &b) {
-    return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-}
+// 隣接ピクセルチェックのためのオフセット定義
+const std::vector<std::pair<int, int>> NEIGHBOR_OFFSETS = {
+    {0, 1}, {1, 0}, {0, -1}, {-1, 0},  // 上下左右
+    {1, 1}, {-1, -1}, {1, -1}, {-1, 1} // 対角
+};
 
-// フィルタリング関数
-std::vector<Event> filter_events(const std::vector<Event> &events, float N, float tau, int K_threshold) {
+// フィルタリング関数（隣接ピクセルベース）
+std::vector<Event> filter_events(const std::vector<Event> &events, float tau, int K_threshold) {
     std::vector<Event> filtered_events;
 
     for (size_t i = 0; i < events.size(); ++i) {
@@ -28,8 +30,16 @@ std::vector<Event> filter_events(const std::vector<Event> &events, float N, floa
             if (i == j) continue;
             const Event &neighbor = events[j];
 
-            // 空間的近傍の条件
-            if (distance(current, neighbor) <= N) {
+            // 隣接ピクセル条件
+            bool is_neighbor = false;
+            for (const auto &offset : NEIGHBOR_OFFSETS) {
+                if (neighbor.x == current.x + offset.first && neighbor.y == current.y + offset.second) {
+                    is_neighbor = true;
+                    break;
+                }
+            }
+
+            if (is_neighbor) {
                 // 時間的近傍の条件
                 if (std::abs(current.time - neighbor.time) <= tau) {
                     valid_neighbors++;
@@ -49,11 +59,11 @@ std::vector<Event> filter_events(const std::vector<Event> &events, float N, floa
 
 PYBIND11_MODULE(filter_events, m) {
     py::class_<Event>(m, "Event")
-        .def(py::init<float, float, float>())
+        .def(py::init<int, int, float>())  // 整数型のx, yとfloat型のtime
         .def_readwrite("x", &Event::x)
         .def_readwrite("y", &Event::y)
         .def_readwrite("time", &Event::time);
 
-    m.def("filter_events", &filter_events, "Filter events based on spatial and temporal constraints",
-          py::arg("events"), py::arg("N"), py::arg("tau"), py::arg("K_threshold"));
+    m.def("filter_events", &filter_events, "Filter events based on spatial adjacency and temporal constraints",
+          py::arg("events"), py::arg("tau"), py::arg("K_threshold"));
 }
