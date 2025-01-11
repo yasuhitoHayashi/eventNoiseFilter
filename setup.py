@@ -14,7 +14,7 @@ ext_modules = [
         'filter_events',
         ['filter_events.cpp'],
         include_dirs=[pybind11.get_include()],
-        language='c++',  # 使用する言語
+        language='c++',
         extra_compile_args=['-O3', '-std=c++11'],
     ),
 ]

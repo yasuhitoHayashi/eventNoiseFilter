@@ -59,7 +59,7 @@ std::vector<Event> filter_events(const std::vector<Event> &events, float tau, in
 
 PYBIND11_MODULE(filter_events, m) {
     py::class_<Event>(m, "Event")
-        .def(py::init<int, int, float>())  // 整数型のx, yとfloat型のtime
+        .def(py::init<int, int, float>())
         .def_readwrite("x", &Event::x)
         .def_readwrite("y", &Event::y)
         .def_readwrite("time", &Event::time);

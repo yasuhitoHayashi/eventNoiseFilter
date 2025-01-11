@@ -34,17 +34,14 @@ def plot_event_counts_with_sliding_window(pkl_file, output_file, time_bin_size, 
         df['time'] = pd.to_numeric(df['time'], errors='coerce')
         df = df.dropna(subset=['time'])  # NaN を削除
 
-    # 最大時間を取得
     max_time = df['time'].max()
 
-    # スライディングウィンドウでイベント数を計算
-    bins = np.arange(0, max_time, step_size)  # スライディングの開始点
+    bins = np.arange(0, max_time, step_size)
     event_counts = [
         len(df[(df['time'] >= start) & (df['time'] < start + time_bin_size)])
         for start in bins
     ]
 
-    # プロットの作成
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
 

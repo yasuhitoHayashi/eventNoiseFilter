@@ -12,7 +12,6 @@ from tqdm import tqdm
 import argparse
 
 def process_and_save(file_path):
-    # 出力ディレクトリを設定（CSVファイル名をディレクトリ名に変換）
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     output_dir = os.path.join(os.path.dirname(file_path), f"{file_name}_filtered_results")
     os.makedirs(output_dir, exist_ok=True)
@@ -30,12 +29,10 @@ def process_and_save(file_path):
 
     print("Start processing chunks...")
 
-    # チャンクごとに処理
     for chunk in tqdm(pd.read_csv(file_path, header=None, names=['x', 'y', 'polarity', 'time'],
                                   dtype={'x': 'int32', 'y': 'int32', 'polarity': 'int8', 'time': 'int64'},
                                   chunksize=chunksize, engine='python'),
                       total=(total_lines // chunksize) + 1):
-        # timeをusからmsへ変換
         chunk['time'] = chunk['time'] // 1000
 
         # polarity == 1 のみ処理
@@ -43,17 +40,13 @@ def process_and_save(file_path):
         if len(chunk) == 0:
             continue
 
-        # C++モジュールに渡すイベントリストを作成
         events = [filter_events.Event(int(row.x), int(row.y), row.time) for row in chunk.itertuples(index=False)]
 
-        # フィルタリングを実行
         filtered = filter_events.filter_events(events, tau, K_threshold)
 
-        # フィルタリング結果をDataFrameに変換
         filtered_list = [(e.x, e.y, e.time) for e in filtered]
         filtered_df = pd.DataFrame(filtered_list, columns=['x', 'y', 'time'])
 
-        # 部分結果をファイルに保存
         part_file = os.path.join(output_dir, f'filtered_events_part_{chunk_id}.pkl')
         with open(part_file, 'wb') as f:
             pickle.dump(filtered_df, f)
@@ -63,14 +56,12 @@ def process_and_save(file_path):
 
     print("All chunks processed. Now combining results...")
 
-    # 部分ファイルを結合
     all_filtered_dfs = []
     for f in sorted(filtered_files):
         with open(f, 'rb') as fh:
             df_part = pickle.load(fh)
             all_filtered_dfs.append(df_part)
 
-    # 結合した結果を保存
     if len(all_filtered_dfs) > 0:
         combined_df = pd.concat(all_filtered_dfs, ignore_index=True)
     else:

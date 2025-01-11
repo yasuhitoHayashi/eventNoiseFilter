@@ -23,33 +23,17 @@ plt.rcParams.update({
 })
 
 def downsample_events(data, sampling_ratio):
-    """
-    指定されたサンプリング比率でイベントを間引く
-    """
     return data.iloc[::sampling_ratio]
 
 def plot_event_counts(file_path, output_file, time_bin_size, sampling_ratio):
-    """
-    CSVファイルを読み込み、時間ごとのイベント数をプロット
-
-    Args:
-        file_path: CSVファイルのパス
-        output_file: 出力画像ファイルのパス
-        time_bin_size: 時間ビンのサイズ（ミリ秒単位）
-        sampling_ratio: サンプリング比率
-    """
-    # データの読み込み
     data = pd.read_csv(file_path, header=None, names=['x', 'y', 'polarity', 'time'])
     data['time'] = data['time'] * 1e-3  # マイクロ秒をミリ秒に変換
 
-    # サンプリングの適用
     data = downsample_events(data, sampling_ratio)
 
-    # 時間ビンごとにイベント数を集計
     data['time_bin'] = (data['time'] // time_bin_size) * time_bin_size
     event_counts = data.groupby('time_bin').size()
 
-    # プロットの作成
     fig, ax = plt.subplots(figsize=(10, 8))
     ax.plot(event_counts.index / 1000, event_counts.values, label='Event Count', color='blue')
 
