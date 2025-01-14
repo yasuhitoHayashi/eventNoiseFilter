@@ -1,6 +1,8 @@
 # eventNoiseFilter
 This repository is designed to filter event noise by utilizing the presence of neighboring events. It provides tools for event-based camera data denoising, visualization, and analysis, tailored for researchers working with event-based camera.
 
+https://yasuhitohayashi.github.io/blogPostTemplate.html?file=posts/eventNoiseFilter.md
+
 #### Input & Output: The left panel shows raw event data (downsampled to 1/10), and the right panel shows denoised results.
 ![InputOutput](sampleData/inputAndOutput.png)
 
