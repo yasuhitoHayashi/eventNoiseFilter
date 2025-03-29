@@ -18,7 +18,6 @@ const std::vector<std::pair<int, int>> NEIGHBOR_OFFSETS = {
     {1, 1}, {-1, -1}, {1, -1}, {-1, 1} // 対角
 };
 
-// フィルタリング関数（隣接ピクセルベース）
 std::vector<Event> filter_events(const std::vector<Event> &events, float tau, int K_threshold) {
     std::vector<Event> filtered_events;
 
@@ -30,30 +29,28 @@ std::vector<Event> filter_events(const std::vector<Event> &events, float tau, in
             if (i == j) continue;
             const Event &neighbor = events[j];
 
-            // 隣接ピクセル条件
-            bool is_neighbor = false;
-            for (const auto &offset : NEIGHBOR_OFFSETS) {
-                if (neighbor.x == current.x + offset.first && neighbor.y == current.y + offset.second) {
-                    is_neighbor = true;
-                    break;
+            // まず、時間近傍の条件を確認
+            if (std::abs(current.time - neighbor.time) <= tau) {
+                // 時間条件を満たすイベントに対して、隣接ピクセルの条件をチェック
+                bool is_neighbor = false;
+                for (const auto &offset : NEIGHBOR_OFFSETS) {
+                    if (neighbor.x == current.x + offset.first && neighbor.y == current.y + offset.second) {
+                        is_neighbor = true;
+                        break;
+                    }
                 }
-            }
-
-            if (is_neighbor) {
-                // 時間的近傍の条件
-                if (std::abs(current.time - neighbor.time) <= tau) {
+                if (is_neighbor) {
                     valid_neighbors++;
                 }
             }
 
-            // 閾値を超えたらフィルタを通過
+            // 有効な隣接イベントが閾値を超えたら、現在のイベントをフィルタ通過とする
             if (valid_neighbors >= K_threshold) {
                 filtered_events.push_back(current);
                 break;
             }
         }
     }
-
     return filtered_events;
 }
 
