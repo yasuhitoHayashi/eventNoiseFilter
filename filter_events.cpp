@@ -1,6 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <vector>
+#include <deque>
+#include <unordered_map>
+#include <algorithm>
 #include <cmath>
 
 namespace py = pybind11;
@@ -19,38 +22,76 @@ const std::vector<std::pair<int, int>> NEIGHBOR_OFFSETS = {
 };
 
 std::vector<Event> filter_events(const std::vector<Event> &events, float tau, int K_threshold) {
-    std::vector<Event> filtered_events;
+    if (events.empty()) {
+        return {};
+    }
 
-    for (size_t i = 0; i < events.size(); ++i) {
-        const Event &current = events[i];
-        int valid_neighbors = 0;
+    // 時間順にソートされたイベントを保持
+    std::vector<Event> sorted_events = events;
+    std::sort(sorted_events.begin(), sorted_events.end(), [](const Event &a, const Event &b) {
+        return a.time < b.time;
+    });
 
-        for (size_t j = 0; j < events.size(); ++j) {
-            if (i == j) continue;
-            const Event &neighbor = events[j];
+    std::vector<int> neighbor_count(sorted_events.size(), 0);
 
-            // まず、時間近傍の条件を確認
-            if (std::abs(current.time - neighbor.time) <= tau) {
-                // 時間条件を満たすイベントに対して、隣接ピクセルの条件をチェック
-                bool is_neighbor = false;
-                for (const auto &offset : NEIGHBOR_OFFSETS) {
-                    if (neighbor.x == current.x + offset.first && neighbor.y == current.y + offset.second) {
-                        is_neighbor = true;
-                        break;
-                    }
-                }
-                if (is_neighbor) {
-                    valid_neighbors++;
+    // 座標をキーとした時間キューを保持し、一定時間以上経過したイベントは逐次削除する
+    struct PairHash {
+        std::size_t operator()(const std::pair<int, int> &p) const noexcept {
+            return (static_cast<std::size_t>(p.first) << 32) ^ static_cast<std::size_t>(p.second);
+        }
+    };
+
+    std::unordered_map<std::pair<int, int>, std::deque<std::size_t>, PairHash> index_map;
+
+    std::size_t start = 0;
+    for (std::size_t i = 0; i < sorted_events.size(); ++i) {
+        const Event &current = sorted_events[i];
+
+        // 有効時間ウィンドウ外のイベントを削除
+        while (sorted_events[i].time - sorted_events[start].time > tau) {
+            auto key = std::make_pair(sorted_events[start].x, sorted_events[start].y);
+            auto it = index_map.find(key);
+            if (it != index_map.end() && !it->second.empty()) {
+                it->second.pop_front();
+                if (it->second.empty()) {
+                    index_map.erase(it);
                 }
             }
+            ++start;
+        }
 
-            // 有効な隣接イベントが閾値を超えたら、現在のイベントをフィルタ通過とする
-            if (valid_neighbors >= K_threshold) {
-                filtered_events.push_back(current);
+        int count = 0;
+        // 近傍ピクセルに存在するイベントの数を集計
+        for (const auto &offset : NEIGHBOR_OFFSETS) {
+            auto key = std::make_pair(current.x + offset.first, current.y + offset.second);
+            auto it = index_map.find(key);
+            if (it != index_map.end()) {
+                count += static_cast<int>(it->second.size());
+                // 近傍イベントにもカウントを加算
+                for (std::size_t idx : it->second) {
+                    neighbor_count[idx]++;
+                }
+            }
+            if (count >= K_threshold) {
                 break;
             }
         }
+
+        neighbor_count[i] += count;
+
+        // 現在のイベントをインデックスに追加
+        index_map[std::make_pair(current.x, current.y)].push_back(i);
     }
+
+    std::vector<Event> filtered_events;
+    filtered_events.reserve(sorted_events.size());
+
+    for (std::size_t i = 0; i < sorted_events.size(); ++i) {
+        if (neighbor_count[i] >= K_threshold) {
+            filtered_events.push_back(sorted_events[i]);
+        }
+    }
+
     return filtered_events;
 }
 
